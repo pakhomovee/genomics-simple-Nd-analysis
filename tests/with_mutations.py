@@ -126,13 +126,13 @@ class Test:
         self.ts = ts
         self.has_nd_ancestry = HAS_ND_ANCESTRY(ts)
 
-def generate_tests(cnt):
+def generate_tests(cnt, require_admix = True):
     tests = []
     i = 0
     while len(tests) < cnt:
         tests.append(Test(generate_demography(i + 1)))
         i += 1
-        if not HAS_ND_ANCESTRY(tests[-1].ts):
+        if not HAS_ND_ANCESTRY(tests[-1].ts) and require_admix:
             tests.pop()
     print("GENERATED:")
     for test in tests:
