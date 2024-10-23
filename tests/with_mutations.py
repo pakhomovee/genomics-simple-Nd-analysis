@@ -30,7 +30,12 @@ def generate_demography(seed, do_draw=False, cnt=1):
     demography.add_population_split(time=4_000, derived=["EUR_PURE", "AFR"], ancestral="NND")
     demography.add_admixture(2_000, derived="EUR", ancestral=["EUR_PURE", "ND"], proportions=[0.97, 0.03])
     demography.sort_events()
-    ts = msprime.sim_ancestry(samples={"AFR": cnt, "EUR": cnt, "ND": cnt}, demography=demography, random_seed=seed, ploidy=1, sequence_length=100000)
+    samples = [
+        msprime.SampleSet(cnt, population="EUR", time=0),
+        msprime.SampleSet(cnt, population="AFR", time=0),
+        msprime.SampleSet(cnt, population="ND", time=1_500)
+    ]
+    ts = msprime.sim_ancestry(samples=samples, demography=demography, random_seed=seed, ploidy=1, sequence_length=100000,)
     ts = msprime.sim_mutations(ts, rate=10 ** -8)
     if do_draw: # Draw
         styles = []
@@ -139,3 +144,5 @@ def generate_tests(cnt, require_admix = True):
         print(f"{test.has_nd_ancestry}: {estimate(test.ts)}, {get_mutations(test.ts)}")
     print('=' * 10)
     return tests
+
+generate_demography(42, True, 1)
