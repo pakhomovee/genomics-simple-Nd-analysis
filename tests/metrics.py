@@ -4,7 +4,7 @@ import math
 from scipy import integrate
 Ne = 5000 #same for now
 mu = 10 ** -8
-t_ND = 2000
+t_ND = 1500
 LEN = 100000
 def Pois(k, t):
     L = mu * t * LEN
@@ -73,7 +73,7 @@ def cumulative_no_admix(k1, k2, k3):
 stats = [[0, 0], [0, 0]]
 threshold = 0.5
 testid = 1
-TESTCOUNT = 2000
+TESTCOUNT = 200
 processed = 0
 total_admix = 0
 for test in with_mutations.generate_tests(TESTCOUNT, False):

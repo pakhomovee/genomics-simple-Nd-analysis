@@ -31,8 +31,8 @@ def generate_demography(seed, do_draw=False, cnt=1):
     demography.add_admixture(2_000, derived="EUR", ancestral=["EUR_PURE", "ND"], proportions=[0.97, 0.03])
     demography.sort_events()
     samples = [
-        msprime.SampleSet(cnt, population="EUR", time=0),
         msprime.SampleSet(cnt, population="AFR", time=0),
+        msprime.SampleSet(cnt, population="EUR", time=0),
         msprime.SampleSet(cnt, population="ND", time=1_500)
     ]
     ts = msprime.sim_ancestry(samples=samples, demography=demography, random_seed=seed, ploidy=1, sequence_length=100000,)
@@ -84,7 +84,7 @@ config_probs = [
     0.03 * np.exp(-26) / 3
 ]
 
-def get_mutations(ts):
+def get_mutations(ts): # this uses order!!!! AFR, EUR, ND
     k1, k2, k3 = 0, 0, 0
     for v in ts.variants():
         v = v.genotypes
