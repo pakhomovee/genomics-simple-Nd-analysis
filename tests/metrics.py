@@ -68,15 +68,18 @@ def cumulative_admix(k1, k2, k3):
     return estimate1(k1, k2, k3) * (1 - 2/3 * np.exp(-26000/10000)) + estimate2(k1, k2, k3) * np.exp(-26000/10000) / 3 + estimate3(k1, k2, k3) * np.exp(-26000/10000) / 3
 
 def cumulative_no_admix(k1, k2, k3):
-    return estimateno1(k1, k2, k3) * (1 - 2/3 * np.exp(-26000/10000)) + estimateno2(k1, k2, k3) * np.exp(-26000/10000) / 3 + estimateno3(k1, k2, k3) * np.exp(-26000/10000) / 3
+    return estimateno1(k1, k2, k3) * (1 - 2/3 * np.exp(-24/10)) + estimateno2(k1, k2, k3) * np.exp(-24/10) / 3 + estimateno3(k1, k2, k3) * np.exp(-24/10) / 3
 
 stats = [[0, 0], [0, 0]]
 threshold = 0.5
 testid = 1
-TESTCOUNT = 10000
+TESTCOUNT = 2000
+processed = 0
+total_admix = 0
 for test in with_mutations.generate_tests(TESTCOUNT, False):
     k1, k2, k3 = with_mutations.get_mutations(test.ts)
     t1, t2 = with_mutations.get_times(test.ts)
+    total_admix += test.has_nd_ancestry
     if testid % 100 == 0:
         print('=' * 10, f'Test #{testid}', '=' * 10)
     if testid % 1000 == 0:
@@ -87,12 +90,16 @@ for test in with_mutations.generate_tests(TESTCOUNT, False):
         y = cumulative_no_admix(k1, k2, k3)
         #print(f"#k1: {k1}, #k2: {k2}, #k3: {k3}, #admix_score: {x}")
         #print(f"#k1: {k1}, #k2: {k2}, #k3: {k3}, #no_admix_score: {y}")
-        prob = x / (x + y)
         #print("PREDICTED PROBABILITY:", prob)
         #print('=' * 20)
+        #print(f"predicted {x} vs {y}, answer {test.has_nd_ancestry}")
+        prob = x / (x + y)
         stats[test.has_nd_ancestry][prob >= threshold] += 1
+        processed += 1
     except Exception as e:
         pass
     testid += 1
 print(stats[0][0] / TESTCOUNT, stats[0][1] / TESTCOUNT)
 print(stats[1][0] / TESTCOUNT, stats[1][1] / TESTCOUNT)
+print(f"processed {processed} tests")
+print(f"total admixed {total_admix} tests")
