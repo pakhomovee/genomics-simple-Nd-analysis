@@ -17,26 +17,28 @@ from random import randint as rnd
 import msprime
 import numpy as np
 from IPython.display import SVG, display
+import params
+Params = params.PARAMS()
 def generate_demography(seed, do_draw=False, cnt=1):
     # Define demography structure
     demography = msprime.Demography()
-    demography.add_population(name="ANC", initial_size=11_000)
-    demography.add_population(name="EUR_PURE", initial_size=5_000)
-    demography.add_population(name="EUR", initial_size=5_000)
-    demography.add_population(name="AFR", initial_size=5_000)
-    demography.add_population(name="NND", initial_size=10_000)
-    demography.add_population(name="ND", initial_size=1_000)
-    demography.add_population_split(time=28_000, derived=["ND", "NND"], ancestral="ANC")
-    demography.add_population_split(time=4_000, derived=["EUR_PURE", "AFR"], ancestral="NND")
-    demography.add_admixture(2_000, derived="EUR", ancestral=["EUR_PURE", "ND"], proportions=[0.97, 0.03])
+    demography.add_population(name="ANC", initial_size=Params.N_ANC)
+    demography.add_population(name="EUR_PURE", initial_size=Params.N_EUR)
+    demography.add_population(name="EUR", initial_size=Params.N_EUR)
+    demography.add_population(name="AFR", initial_size=Params.N_AFR)
+    demography.add_population(name="NND", initial_size=Params.N_NND)
+    demography.add_population(name="ND", initial_size=Params.N_ND)
+    demography.add_population_split(time=Params.t_all, derived=["ND", "NND"], ancestral="ANC")
+    demography.add_population_split(time=Params.t_AFR_EUR, derived=["EUR_PURE", "AFR"], ancestral="NND")
+    demography.add_admixture(Params.t_admix, derived="EUR", ancestral=["EUR_PURE", "ND"], proportions=[0.97, 0.03])
     demography.sort_events()
     samples = [
         msprime.SampleSet(cnt, population="AFR", time=0),
         msprime.SampleSet(cnt, population="EUR", time=0),
-        msprime.SampleSet(cnt, population="ND", time=1_500)
+        msprime.SampleSet(cnt, population="ND", time=Params.t_ND)
     ]
-    ts = msprime.sim_ancestry(samples=samples, demography=demography, random_seed=seed, ploidy=1, sequence_length=100000,)
-    ts = msprime.sim_mutations(ts, rate=10 ** -8)
+    ts = msprime.sim_ancestry(samples=samples, demography=demography, random_seed=seed, ploidy=1, sequence_length=Params.seq_len)
+    ts = msprime.sim_mutations(ts, rate=Params.mu)
     if do_draw: # Draw
         styles = []
         # Create a style for each population, programmatically (or just type the string by hand)
