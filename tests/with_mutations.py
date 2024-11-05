@@ -60,85 +60,6 @@ def generate_demography(seed, do_draw=False, cnt=1):
             outfile.write(SVG(ts.first().draw_svg(y_axis=True, size=(1000,400), time_scale='rank', y_label=' ', style=css_string, node_labels=nd_labels)).data)
     return ts
 
-
-def connected(m):
-    for i in range(len(m) - 1):
-        if m[i][1] == m[i + 1][0]:
-            return True
-    return False
-
-
-def remove_one(m):
-    mas = m
-    while connected(mas) == True:
-        for i in range(len(mas)-1):
-            if mas[i][1] == mas[i+1][0]:
-                mas[i][1] = mas[i+1][1]
-                mas.pop(i+1)
-                break
-    return mas
-def get_migrating_tracts_ind(ts, pop_name, ind, T_anc):
-    pop = -1
-    for i in ts.populations():
-        if i.metadata['name'] == pop_name:
-            pop = i.id
-
-    mig = ts.tables.migrations
-    migration_int = []
-
-    for tree in ts.trees():  # перебираем все деревья. Как известно, каждому дереву отвечает участок днк
-        anc_node = ind  # chose observable node
-        while tree.time(tree.parent(
-                anc_node)) <= T_anc:  # идем в прошлое до вершины anc_node по предкам нашего мексиканца, пока не наткнемся на миграцию
-            anc_node = tree.parent(anc_node)
-        migs = np.where(mig.node == anc_node)[0]  # выбирем все строки, соответствующие заданному узлу
-
-        # идем по таблице миграций с anc_node и проверяем, чтобы миграции попадали в тот самый участок днк
-        for i in migs:
-
-            stroka = mig[i]
-            if stroka.time == T_anc and stroka.dest == pop and tree.interval.left >= stroka.left and tree.interval.right <= stroka.right:
-                migration_int.append([tree.interval.left, tree.interval.right])
-
-    migration_int2 = []
-    for i in range(len(migration_int)):
-        if migration_int[i][0] != migration_int[i][1]:
-            migration_int2.append(migration_int[i])
-    migration_int = migration_int2
-
-    mi = remove_one(migration_int)
-    mi.sort()
-
-    return mi
-
-
-def HAS_ND_ANCESTRY(ts):
-    nd_sample = -1
-    eur_sample = -1
-    afr_sample = -1
-    for n in ts.nodes():
-        if n.is_sample():
-            if ts.population(n.population).metadata["name"] == "ND":
-                nd_sample = n.id
-            elif ts.population(n.population).metadata["name"] == "EUR":
-                eur_sample = n.id
-            else:
-                afr_sample = n.id
-    #print("EUR-ND:", ts.nodes()[ts.first().mrca(eur_sample, nd_sample)].time)
-    #print("EUR-AFR:", ts.nodes()[ts.first().mrca(eur_sample, afr_sample)].time)
-    if (ts.nodes()[ts.first().mrca(eur_sample, nd_sample)]).time < ts.nodes()[ts.first().mrca(eur_sample, afr_sample)].time:
-        return True
-    return False
-
-config_probs = [
-    0.97 * (1 - 2/3 * np.exp(-2.4)),
-    0.97 * np.exp(-2.4) / 3,
-    0.97 * np.exp(-2.4) / 3,
-    0.03 * (1 - 2/3 * np.exp(-26)),
-    0.03 * np.exp(-26) / 3,
-    0.03 * np.exp(-26) / 3
-]
-
 def get_mutations(ts): # this uses order!!!! AFR, EUR, ND
     k1, k2, k3 = 0, 0, 0
     for v in ts.variants():
@@ -162,6 +83,7 @@ def is_ok(ts):
         if n.population == 5:
             ok = True
     return ok
+
 def get_times(ts):
     nd_sample = 2
     eur_sample = 1
@@ -171,17 +93,6 @@ def get_times(ts):
     t2 = (ts.nodes()[ts.first().mrca(eur_sample, nd_sample)]).time
     t1 = ts.nodes()[ts.first().mrca(eur_sample, afr_sample)].time
     return t1, t2
-def calc_mutations_probs(ts, i):
-    k1, k2, k3 = get_mutations(ts)
-    prob = 0
-    
-    return prob
-def estimate(ts):
-    res = 0
-    for i in range(3, 6):
-        #  res += P(mutation|config)P(config)
-        res += config_probs[i] * calc_mutations_probs(ts, i)
-    return res
 
 class Test:
     def __init__(self, ts):
@@ -199,10 +110,6 @@ def generate_tests(cnt, require_admix = 0, seed = 0):
         if tests:
             if is_ok(tests[-1].ts) and require_admix == -1:
                 tests.pop()
-#    print(f"GENERATED for len {Params.seq_len}:")
-#    for test in tests:
-#        print(f"{test.has_nd_ancestry}: {estimate(test.ts)}, {get_mutations(test.ts)}")
-#    print('=' * 10)
     return tests
 
 generate_demography(42, True, 1)
