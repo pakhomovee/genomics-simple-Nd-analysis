@@ -9,8 +9,8 @@ def get_data(start, end, step, output_queue):
     processed = 0
     total_admix = 0
     stats = [[0, 0], [0, 0]]
-    pts = []
-    pts1 = []
+    pts = {}
+    pts1 = {}
 
     for ts in range(start, end, step):
         test = with_mutations.generate_tests(1, 0, 500 * ts + 1)[0]
@@ -34,10 +34,16 @@ def get_data(start, end, step, output_queue):
             processed += 1
             if test.has_nd_ancestry:
                 k = int(t2) // 1000
-                pts.append((k, prob))
+                if k not in pts:
+                    pts[k] = [0, 0]
+                pts[k][0] += prob
+                pts[k][1] += 1
             else:
                 k = int(t2) // 1000
-                pts1.append((k, prob))
+                if k not in pts1:
+                    pts1[k] = [0, 0]
+                pts1[k][0] += prob
+                pts1[k][1] += 1
         except Exception as e:
             pass
 
@@ -68,8 +74,8 @@ if __name__ == '__main__':
     total_processed = 0
 
     for pts, pts1, stats, processed in results:
-        all_pts.extend(pts)
-        all_pts1.extend(pts1)
+        all_pts.append(pts)
+        all_pts1.append(pts1)
         total_stats[0][0] += stats[0][0]
         total_stats[0][1] += stats[0][1]
         total_stats[1][0] += stats[1][0]
@@ -89,18 +95,20 @@ if __name__ == '__main__':
     d1 = {}
     c = {}
     c1 = {}
-    for (x, y) in all_pts:
-        if x not in d:
-            d[x] = 0
-            c[x] = 0
-        d[x] += y
-        c[x] += 1
-    for (x, y) in all_pts1:
-        if x not in d1:
-            d1[x] = 0
-            c1[x] = 0
-        d1[x] += y
-        c1[x] += 1
+    for arr in all_pts:
+        for x in arr.keys():
+            if x not in d:
+                d[x] = 0
+                c[x] = 0
+            d[x] += arr[x][0]
+            c[x] += arr[x][1]
+    for arr in all_pts1:
+        for x in arr.keys():
+            if x not in d1:
+                d1[x] = 0
+                c1[x] = 0
+            d1[x] += arr[x][0]
+            c1[x] += arr[x][1]
     plt.ticklabel_format(useOffset=False)
     for key in d.keys():
         pts.append((key, d[key] / c[key]))
@@ -114,32 +122,3 @@ if __name__ == '__main__':
     print("========")
     print(pts1)
     plt.savefig('graph.jpeg')
-'''
-print(stats[0][0] / processed, stats[0][1] / processed)
-print(stats[1][0] / processed, stats[1][1] / processed)
-print(f"processed {processed} tests")
-print(f"total admixed {total_admix} tests")
-plt.ticklabel_format(useOffset=False)
-for key in d.keys():
-    pts.append((key, d[key] / c[key]))
-for key in d1.keys():
-    pts1.append((key, d1[key] / c1[key]))
-pts.sort()
-pts1.sort()
-plt.plot([i[0] for i in pts], [i[1] for i in pts])
-plt.plot([i[0] for i in pts1], [i[1] for i in pts1])
-print(pts)
-print("========")
-print(pts1)
-plt.savefig('graph.jpeg')
-plt.clf()
-plt.scatter([i[0] for i in all], [i[1] for i in all])
-plt.savefig('scat.jpeg')
-print(all)
-ignoring t2 > 40k
-0.9193548387096774 0.03735144312393888
-0.004244482173174873 0.03904923599320883
-
-
-
-'''

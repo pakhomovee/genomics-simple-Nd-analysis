@@ -13,5 +13,5 @@ class PARAMS:
         self.threshold = 0.8  # threshold for saying sample has admixture
         self.mu = 1.2 * 10 ** -8  # mutation rate
         self.seq_len = 50_000  # sequence length
-        self.threads = 12
+        self.threads = 28
 Params = PARAMS()
