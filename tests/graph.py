@@ -13,7 +13,7 @@ c = {}
 d1 = {}
 c1 = {}
 for ts in range(Params.TESTCOUNT):
-    test = with_mutations.generate_tests(1, 1, ts)[0]
+    test = with_mutations.generate_tests(1, 1, 500 * ts + 1)[0]
     k1, k2, k3 = with_mutations.get_mutations(test.ts)
     t1, t2 = with_mutations.get_times(test.ts)
     total_admix += test.has_nd_ancestry
@@ -23,8 +23,8 @@ for ts in range(Params.TESTCOUNT):
         print(stats[0][0] / Params.TESTCOUNT, stats[0][1] / Params.TESTCOUNT)
         print(stats[1][0] / Params.TESTCOUNT, stats[1][1] / Params.TESTCOUNT)
     try:
-        x = cumulative_admix(k1, k2, k3)
-        y = cumulative_no_admix(k1, k2, k3)
+        x = max(cumulative_admix(k1, k2, k3), 0)
+        y = max(cumulative_no_admix(k1, k2, k3), 0)
         prob = x / (x + y)
         if math.isnan(prob):
             continue
@@ -37,7 +37,7 @@ for ts in range(Params.TESTCOUNT):
                 c[k] = 0
             d[k] += prob
             c[k] += 1
-            all.append((t2, prob))
+            all.append((t2, float(prob)))
         else:
             k = int(t2) // 1000
             if k not in d1:
@@ -52,6 +52,7 @@ print(stats[0][0] / processed, stats[0][1] / processed)
 print(stats[1][0] / processed, stats[1][1] / processed)
 print(f"processed {processed} tests")
 print(f"total admixed {total_admix} tests")
+plt.ticklabel_format(useOffset=False)
 for key in d.keys():
     pts.append((key, d[key] / c[key]))
 for key in d1.keys():
@@ -67,6 +68,7 @@ plt.savefig('graph.jpeg')
 plt.clf()
 plt.scatter([i[0] for i in all], [i[1] for i in all])
 plt.savefig('scat.jpeg')
+print(all)
 '''plt.clf()
 plt.style.use('_mpl-gallery')
 plt.hist(ptsx, bins=100, linewidth=0.5, edgecolor="white")
