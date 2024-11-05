@@ -1,0 +1,13 @@
+threshold = 0.2
+0.908 0.033
+0.0175 0.0415
+processed 2000 tests
+total admixed 118 tests
+
+threshold = 0.3
+0.937 0.004
+0.0285 0.0305
+processed 2000 tests
+total admixed 118 tests
+0.938 0.003
+0.0295 0.0295

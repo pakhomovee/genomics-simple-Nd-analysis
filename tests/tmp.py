@@ -20,6 +20,8 @@ import tskit
 from IPython.display import SVG, display
 import params
 from params import Params
+
+
 def generate_demography(seed, do_draw=False, cnt=1):
     # Define demography structure
     demography = msprime.Demography()
@@ -33,21 +35,23 @@ def generate_demography(seed, do_draw=False, cnt=1):
     demography.add_population_split(time=Params.t_AFR_EUR, derived=["EUR_PURE", "AFR"], ancestral="NND")
     demography.add_admixture(Params.t_admix, derived="EUR", ancestral=["EUR_PURE", "ND"], proportions=[0.97, 0.03])
     demography.sort_events()
+    #print(demography)
     samples = [
         msprime.SampleSet(cnt, population="AFR", time=0),
         msprime.SampleSet(cnt, population="EUR", time=0),
         msprime.SampleSet(cnt, population="ND", time=Params.t_ND)
     ]
-    ts = msprime.sim_ancestry(samples=samples, demography=demography, random_seed=seed, ploidy=1, sequence_length=Params.seq_len)
+    ts = msprime.sim_ancestry(samples=samples, demography=demography, random_seed=seed, ploidy=1,
+                              sequence_length=Params.seq_len)
     ts = msprime.sim_mutations(ts, rate=Params.mu)
-    if do_draw: # Draw
+    if do_draw:  # Draw
         styles = []
         # Create a style for each population, programmatically (or just type the string by hand)
         for colour, p in zip(['red', 'green', 'blue', 'purple', 'black', 'orange'], ts.populations()):
             # target the symbols only (class "sym")
             s = f".node.p{p.id} > .sym " + "{" + f"fill: {colour}" + "}"
             styles.append(s)
-            #print(f'"{s}" applies to nodes from population {p.metadata["name"]} (id {p.id})')
+            # print(f'"{s}" applies to nodes from population {p.metadata["name"]} (id {p.id})')
         css_string = " ".join(styles)
         nd_labels = {}  # An array of labels for the nodes
         for n in ts.nodes():
@@ -55,9 +59,12 @@ def generate_demography(seed, do_draw=False, cnt=1):
             # to use the *individual* name instead, if the individuals in your tree sequence have names
             if n.is_sample():
                 nd_labels[n.id] = ts.population(n.population).metadata["name"]
-                #print(ts.population(n.population))
-        with open('../tree.svg', 'w') as outfile: # Save
-            outfile.write(SVG(ts.first().draw_svg(y_axis=True, size=(1000,400), time_scale='rank', y_label=' ', style=css_string, node_labels=nd_labels)).data)
+                # print(ts.population(n.population))
+        with open('../tree.svg', 'w') as outfile:  # Save
+            outfile.write(
+                SVG(ts.first().draw_svg(y_axis=True, size=(1000, 400), time_scale='rank', y_label=' ', style=css_string,
+                                        node_labels=nd_labels)).data)
+
     return ts
 
 
@@ -71,12 +78,14 @@ def connected(m):
 def remove_one(m):
     mas = m
     while connected(mas) == True:
-        for i in range(len(mas)-1):
-            if mas[i][1] == mas[i+1][0]:
-                mas[i][1] = mas[i+1][1]
-                mas.pop(i+1)
+        for i in range(len(mas) - 1):
+            if mas[i][1] == mas[i + 1][0]:
+                mas[i][1] = mas[i + 1][1]
+                mas.pop(i + 1)
                 break
     return mas
+
+
 def get_migrating_tracts_ind(ts, pop_name, ind, T_anc):
     pop = -1
     for i in ts.populations():
@@ -124,22 +133,26 @@ def HAS_ND_ANCESTRY(ts):
                 eur_sample = n.id
             else:
                 afr_sample = n.id
-    #print("EUR-ND:", ts.nodes()[ts.first().mrca(eur_sample, nd_sample)].time)
-    #print("EUR-AFR:", ts.nodes()[ts.first().mrca(eur_sample, afr_sample)].time)
-    if (ts.nodes()[ts.first().mrca(eur_sample, nd_sample)]).time < ts.nodes()[ts.first().mrca(eur_sample, afr_sample)].time:
+    # print("EUR-ND:", ts.nodes()[ts.first().mrca(eur_sample, nd_sample)].time)
+    # print("EUR-AFR:", ts.nodes()[ts.first().mrca(eur_sample, afr_sample)].time)
+    print(ts.nodes()[ts.first().mrca(eur_sample, nd_sample)].time, end= ' ')
+    if (ts.nodes()[ts.first().mrca(eur_sample, nd_sample)].time < ts.nodes()[
+        ts.first().mrca(eur_sample, afr_sample)].time):
         return True
     return False
 
+
 config_probs = [
-    0.97 * (1 - 2/3 * np.exp(-2.4)),
+    0.97 * (1 - 2 / 3 * np.exp(-2.4)),
     0.97 * np.exp(-2.4) / 3,
     0.97 * np.exp(-2.4) / 3,
-    0.03 * (1 - 2/3 * np.exp(-26)),
+    0.03 * (1 - 2 / 3 * np.exp(-26)),
     0.03 * np.exp(-26) / 3,
     0.03 * np.exp(-26) / 3
 ]
 
-def get_mutations(ts): # this uses order!!!! AFR, EUR, ND
+
+def get_mutations(ts):  # this uses order!!!! AFR, EUR, ND
     k1, k2, k3 = 0, 0, 0
     for v in ts.variants():
         v = v.genotypes
@@ -151,7 +164,8 @@ def get_mutations(ts): # this uses order!!!! AFR, EUR, ND
             k3 += 1
     return (k1, k2, k3)
 
-def is_ok(ts):
+
+def get_times(ts):
     nd_sample = -1
     eur_sample = 1
     afr_sample = -1
@@ -162,20 +176,15 @@ def is_ok(ts):
         if n.population == 5:
             ok = True
     return ok
-def get_times(ts):
-    nd_sample = 2
-    eur_sample = 1
-    afr_sample = 0
-    # print("EUR-ND:", ts.nodes()[ts.first().mrca(eur_sample, nd_sample)].time)
-    # print("EUR-AFR:", ts.nodes()[ts.first().mrca(eur_sample, afr_sample)].time)
-    t2 = (ts.nodes()[ts.first().mrca(eur_sample, nd_sample)]).time
-    t1 = ts.nodes()[ts.first().mrca(eur_sample, afr_sample)].time
-    return t1, t2
+
+
 def calc_mutations_probs(ts, i):
     k1, k2, k3 = get_mutations(ts)
     prob = 0
-    
+
     return prob
+
+
 def estimate(ts):
     res = 0
     for i in range(3, 6):
@@ -183,26 +192,25 @@ def estimate(ts):
         res += config_probs[i] * calc_mutations_probs(ts, i)
     return res
 
+
 class Test:
     def __init__(self, ts):
         self.ts = ts
-        self.has_nd_ancestry = is_ok(ts)
+        self.has_nd_ancestry = HAS_ND_ANCESTRY(ts)
 
-def generate_tests(cnt, require_admix = 0, seed = 0):
+
+def generate_tests(cnt, require_admix=0, seed=0):
     tests = []
     i = 0
     while len(tests) < cnt:
-        tests.append(Test(generate_demography(seed + i + 1)))
+        tests.append(Test(generate_demography(seed + i + 1, True)))
         i += 1
-        if not is_ok(tests[-1].ts) and require_admix == 1:
+        ts = tests[-1].ts
+        #print(ts.tables.populations)
+        if not get_times(ts):
             tests.pop()
-        if tests:
-            if is_ok(tests[-1].ts) and require_admix == -1:
-                tests.pop()
-#    print(f"GENERATED for len {Params.seq_len}:")
-#    for test in tests:
-#        print(f"{test.has_nd_ancestry}: {estimate(test.ts)}, {get_mutations(test.ts)}")
-#    print('=' * 10)
+    print(get_migrating_tracts_ind(ts, "ND", 1, Params.t_admix), tests[-1].has_nd_ancestry, get_times(ts))
     return tests
 
-generate_demography(42, True, 1)
+
+generate_tests(1, 1, 1)
